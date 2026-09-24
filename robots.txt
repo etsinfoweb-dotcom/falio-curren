@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://falio-curren.netlify.app/sitemap.xml
