@@ -14,7 +14,7 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      const { model, name, color, price, gender, stock, image, low_stock_threshold } = body;
+      const { model, name, color, price, gender, stock, image, low_stock_threshold, specs } = body;
       if (!model || !name || !color || price == null || !gender) {
         return json(400, { success: false, message: 'Champs obligatoires manquants (model, name, color, price, gender).' });
       }
@@ -28,6 +28,7 @@ exports.handler = async (event) => {
           stock: Number(stock) || 0,
           image: image || null,
           low_stock_threshold: low_stock_threshold != null ? Number(low_stock_threshold) : 2,
+          specs: Array.isArray(specs) && specs.length ? specs : null,
           active: true
         })
       });

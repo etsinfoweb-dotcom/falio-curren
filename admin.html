@@ -81,6 +81,12 @@ td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee
         <label>Seuil alerte stock bas<input type="number" name="low_stock_threshold" min="0" value="2"></label>
         <label>Photo<input type="file" name="photo" accept="image/*" id="photo-input"></label>
         <img id="photo-preview" class="preview">
+        <label>Mouvement<input type="text" name="spec_mouvement" placeholder="ex. Quartz analogique"></label>
+        <label>Fonctions<input type="text" name="spec_fonctions" placeholder="ex. Chronographe et date"></label>
+        <label>Bracelet<input type="text" name="spec_bracelet" placeholder="ex. Acier inoxydable"></label>
+        <label>Boîtier<input type="text" name="spec_boitier" placeholder="ex. 44 mm"></label>
+        <label>Verre<input type="text" name="spec_verre" placeholder="ex. Minéral"></label>
+        <label>Étanchéité<input type="text" name="spec_etancheite" placeholder="ex. 3 ATM · éclaboussures et pluie"></label>
         <button type="submit">Ajouter la montre</button>
       </form>
       <p class="status-msg" id="add-status"></p>
@@ -110,6 +116,36 @@ td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee
 
   </main>
 </div>
+
+<dialog id="edit-dialog" style="border:none;border-radius:12px;padding:0;width:min(560px,92vw)">
+  <form id="edit-form" class="add-form" style="padding:20px">
+    <h2 style="grid-column:1/-1;margin:0 0 4px">Modifier la montre</h2>
+    <input type="hidden" name="id">
+    <label>Référence (modèle)<input type="text" name="model" required></label>
+    <label>Nom<input type="text" name="name" required></label>
+    <label>Couleur<input type="text" name="color" required></label>
+    <label>Prix (DA)<input type="number" name="price" required min="0"></label>
+    <label>Collection
+      <select name="gender" required>
+        <option value="homme">Homme</option>
+        <option value="femme">Femme</option>
+      </select>
+    </label>
+    <label>Stock<input type="number" name="stock" required min="0"></label>
+    <label>Seuil alerte stock bas<input type="number" name="low_stock_threshold" min="0"></label>
+    <label>Mouvement<input type="text" name="spec_mouvement"></label>
+    <label>Fonctions<input type="text" name="spec_fonctions"></label>
+    <label>Bracelet<input type="text" name="spec_bracelet"></label>
+    <label>Boîtier<input type="text" name="spec_boitier"></label>
+    <label>Verre<input type="text" name="spec_verre"></label>
+    <label>Étanchéité<input type="text" name="spec_etancheite"></label>
+    <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:6px">
+      <button type="submit" style="flex:1;padding:11px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer">Enregistrer les modifications</button>
+      <button type="button" id="edit-cancel" style="padding:11px 18px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer">Annuler</button>
+    </div>
+    <p class="status-msg" id="edit-status" style="grid-column:1/-1"></p>
+  </form>
+</dialog>
 
 <script>
 const ADMIN_KEY = 'falio_admin_pw';
@@ -216,6 +252,7 @@ function renderTable(){
       <td><button class="row-actions btn-toggle" data-action="toggle" data-id="${p.id}" data-active="${p.active}">${p.active ? 'Actif' : 'Masqué'}</button></td>
       <td class="row-actions">
         <button class="btn-save" data-action="save-stock" data-id="${p.id}">Enregistrer</button>
+        <button class="btn-toggle" data-action="edit" data-id="${p.id}">Modifier</button>
         <button class="btn-delete" data-action="delete" data-id="${p.id}">Supprimer</button>
       </td>`;
     tbody.appendChild(tr);
@@ -256,6 +293,30 @@ document.getElementById('product-tbody').addEventListener('click', async (e) => 
     } catch (err) { alert('Erreur : ' + err.message); }
   }
 
+  if (action === 'edit') {
+    const p = ALL_PRODUCTS.find(x => x.id == id);
+    if (!p) return;
+    const form = document.getElementById('edit-form');
+    form.id.value = p.id;
+    form.model.value = p.model;
+    form.name.value = p.name;
+    form.color.value = p.color;
+    form.price.value = p.price;
+    form.gender.value = p.gender;
+    form.stock.value = p.stock;
+    form.low_stock_threshold.value = p.low_stock_threshold ?? 2;
+    const specs = Array.isArray(p.specs) ? p.specs : [];
+    const findSpec = label => { const row = specs.find(s => s[0] === label); return row ? row[1] : ''; };
+    form.spec_mouvement.value = findSpec('Mouvement');
+    form.spec_fonctions.value = findSpec('Fonctions');
+    form.spec_bracelet.value = findSpec('Bracelet');
+    form.spec_boitier.value = findSpec('Boîtier');
+    form.spec_verre.value = findSpec('Verre');
+    form.spec_etancheite.value = findSpec('Étanchéité');
+    document.getElementById('edit-status').textContent = '';
+    document.getElementById('edit-dialog').showModal();
+  }
+
   if (action === 'delete') {
     if (!confirm('Supprimer définitivement cette montre du catalogue ?')) return;
     try {
@@ -264,6 +325,49 @@ document.getElementById('product-tbody').addEventListener('click', async (e) => 
       document.getElementById('product-count').textContent = ALL_PRODUCTS.length;
       renderTable();
     } catch (err) { alert('Erreur : ' + err.message); }
+  }
+});
+
+document.getElementById('edit-cancel').addEventListener('click', () => document.getElementById('edit-dialog').close());
+
+document.getElementById('edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('edit-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…';
+
+  try {
+    const f = new FormData(form);
+    const specPairs = [
+      ['Mouvement', f.get('spec_mouvement')],
+      ['Fonctions', f.get('spec_fonctions')],
+      ['Bracelet', f.get('spec_bracelet')],
+      ['Boîtier', f.get('spec_boitier')],
+      ['Verre', f.get('spec_verre')],
+      ['Étanchéité', f.get('spec_etancheite')]
+    ].filter(([,v]) => v && v.trim());
+
+    await api('/.netlify/functions/admin-products', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        id: Number(f.get('id')),
+        model: f.get('model'), name: f.get('name'), color: f.get('color'),
+        price: Number(f.get('price')), gender: f.get('gender'),
+        stock: Number(f.get('stock')), low_stock_threshold: Number(f.get('low_stock_threshold')) || 2,
+        specs: specPairs.length ? specPairs : null
+      })
+    });
+
+    document.getElementById('edit-dialog').close();
+    loadProducts();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer les modifications';
   }
 });
 
@@ -319,13 +423,23 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
       imageUrl = uploadRes.url;
     }
 
+    const specPairs = [
+      ['Mouvement', f.get('spec_mouvement')],
+      ['Fonctions', f.get('spec_fonctions')],
+      ['Bracelet', f.get('spec_bracelet')],
+      ['Boîtier', f.get('spec_boitier')],
+      ['Verre', f.get('spec_verre')],
+      ['Étanchéité', f.get('spec_etancheite')]
+    ].filter(([,v]) => v && v.trim());
+
     await api('/.netlify/functions/admin-products', {
       method: 'POST',
       body: JSON.stringify({
         model: f.get('model'), name: f.get('name'), color: f.get('color'),
         price: Number(f.get('price')), gender: f.get('gender'),
         stock: Number(f.get('stock')), low_stock_threshold: Number(f.get('low_stock_threshold')) || 2,
-        image: imageUrl
+        image: imageUrl,
+        specs: specPairs.length ? specPairs : null
       })
     });
 
