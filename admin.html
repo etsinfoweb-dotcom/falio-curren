@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FALIO — Administration</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root{--ink:#1a1a1a;--muted:#6b6b6b;--line:#e4e4e4;--bg:#fafafa;--accent:#b8862c;--green:#2e7d32;--red:#c0392b;--orange:#e08a00}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#111;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;margin:0;letter-spacing:.5px}
+header button{background:none;border:1px solid #555;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:20px}
+.login-box{max-width:340px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center}
+.login-box input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:15px;margin:14px 0}
+.login-box button{width:100%;padding:10px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:15px;cursor:pointer}
+.login-error{color:var(--red);font-size:13px;min-height:18px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:20px}
+.panel h2{margin:0 0 12px;font-size:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input,.toolbar select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+.toolbar input[type="text"]{flex:1;min-width:180px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
+tr.low-stock{background:#fff4e5}
+tr.out-stock{background:#fde8e8}
+td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee}
+.stock-input{width:60px;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.low{background:#fde6c2;color:var(--orange)}
+.badge.out{background:#fbdada;color:var(--red)}
+.badge.ok{background:#e2f0e4;color:var(--green)}
+.row-actions{display:flex;gap:6px}
+.row-actions button{border:none;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer}
+.btn-save{background:var(--ink);color:#fff}
+.btn-delete{background:#fbdada;color:var(--red)}
+.btn-toggle{background:#eee;color:var(--ink)}
+.add-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.add-form label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}
+.add-form input,.add-form select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink)}
+.add-form button{grid-column:1/-1;padding:12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:15px;cursor:pointer;margin-top:4px}
+.status-msg{font-size:13px;min-height:18px;margin-top:8px}
+.status-msg.ok{color:var(--green)}
+.status-msg.err{color:var(--red)}
+.preview{width:60px;height:60px;object-fit:cover;border-radius:8px;margin-top:6px;display:none}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-box">
+  <h2>Administration FALIO</h2>
+  <input type="password" id="login-password" placeholder="Mot de passe">
+  <button id="login-btn">Se connecter</button>
+  <p class="login-error" id="login-error"></p>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <h1>FALIO — Administration</h1>
+    <button id="logout-btn">Se déconnecter</button>
+  </header>
+  <main>
+
+    <div class="panel">
+      <h2>Page d'accueil du site</h2>
+      <form id="settings-form" class="add-form">
+        <label>Nom de la marque<input type="text" name="brand_name"></label>
+        <label>Sous-titre du logo<input type="text" name="brand_tagline"></label>
+        <label>Logo (image, optionnel)<input type="file" name="logo_photo" accept="image/*" id="logo-input"></label>
+        <img id="logo-preview" class="preview">
+        <label class="full">Texte au-dessus du titre (bannière)<input type="text" name="hero_kicker"></label>
+        <label class="full">Titre principal (bannière)<input type="text" name="hero_title"></label>
+        <label class="full">Texte de la bannière<input type="text" name="hero_text"></label>
+        <label>Texte du bouton principal<input type="text" name="cta_text"></label>
+        <label>Photo de la bannière<input type="file" name="hero_photo" accept="image/*" id="hero-input"></label>
+        <img id="hero-preview" class="preview">
+        <label class="full">Texte au-dessus du titre ("À propos")<input type="text" name="story_kicker"></label>
+        <label class="full">Titre de la section "À propos"<input type="text" name="story_title"></label>
+        <label class="full">Texte de la section "À propos"<input type="text" name="story_text"></label>
+        <label>Photo de la section "À propos"<input type="file" name="story_photo" accept="image/*" id="story-input"></label>
+        <img id="story-preview" class="preview">
+        <button type="submit">Enregistrer la page d'accueil</button>
+      </form>
+      <p class="status-msg" id="settings-status"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Ajouter une nouvelle montre</h2>
+      <form id="add-form" class="add-form">
+        <label>Référence (modèle)<input type="text" name="model" required placeholder="ex. 8502"></label>
+        <label>Nom<input type="text" name="name" required placeholder="ex. CURREN Élan · 8502"></label>
+        <label>Couleur<input type="text" name="color" required placeholder="ex. Noir et argenté"></label>
+        <label>Prix (DA)<input type="number" name="price" required min="0"></label>
+        <label>Collection
+          <select name="gender" required>
+            <option value="homme">Homme</option>
+            <option value="femme">Femme</option>
+          </select>
+        </label>
+        <label>Stock<input type="number" name="stock" required min="0" value="5"></label>
+        <label>Seuil alerte stock bas<input type="number" name="low_stock_threshold" min="0" value="2"></label>
+        <label>Photo<input type="file" name="photo" accept="image/*" id="photo-input"></label>
+        <img id="photo-preview" class="preview">
+        <label>Mouvement<input type="text" name="spec_mouvement" placeholder="ex. Quartz analogique"></label>
+        <label>Fonctions<input type="text" name="spec_fonctions" placeholder="ex. Chronographe et date"></label>
+        <label>Bracelet<input type="text" name="spec_bracelet" placeholder="ex. Acier inoxydable"></label>
+        <label>Boîtier<input type="text" name="spec_boitier" placeholder="ex. 44 mm"></label>
+        <label>Verre<input type="text" name="spec_verre" placeholder="ex. Minéral"></label>
+        <label>Étanchéité<input type="text" name="spec_etancheite" placeholder="ex. 3 ATM · éclaboussures et pluie"></label>
+        <button type="submit">Ajouter la montre</button>
+      </form>
+      <p class="status-msg" id="add-status"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Catalogue (<span id="product-count">…</span> montres)</h2>
+      <div class="toolbar">
+        <input type="text" id="search-input" placeholder="Rechercher par nom, modèle, couleur…">
+        <select id="filter-gender">
+          <option value="">Toutes collections</option>
+          <option value="homme">Homme</option>
+          <option value="femme">Femme</option>
+        </select>
+        <select id="filter-stock">
+          <option value="">Tout stock</option>
+          <option value="low">Stock bas</option>
+          <option value="out">Rupture</option>
+        </select>
+      </div>
+      <p class="status-msg" id="list-status">Chargement…</p>
+      <table id="product-table" hidden>
+        <thead><tr><th></th><th>Modèle</th><th>Nom</th><th>Couleur</th><th>Prix</th><th>Collection</th><th>Stock</th><th>Statut</th><th>Actif</th><th></th></tr></thead>
+        <tbody id="product-tbody"></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<dialog id="edit-dialog" style="border:none;border-radius:12px;padding:0;width:min(560px,92vw)">
+  <form id="edit-form" class="add-form" style="padding:20px">
+    <h2 style="grid-column:1/-1;margin:0 0 4px">Modifier la montre</h2>
+    <input type="hidden" name="id">
+    <label>Référence (modèle)<input type="text" name="model" required></label>
+    <label>Nom<input type="text" name="name" required></label>
+    <label>Couleur<input type="text" name="color" required></label>
+    <label>Prix (DA)<input type="number" name="price" required min="0"></label>
+    <label>Collection
+      <select name="gender" required>
+        <option value="homme">Homme</option>
+        <option value="femme">Femme</option>
+      </select>
+    </label>
+    <label>Stock<input type="number" name="stock" required min="0"></label>
+    <label>Seuil alerte stock bas<input type="number" name="low_stock_threshold" min="0"></label>
+    <label>Mouvement<input type="text" name="spec_mouvement"></label>
+    <label>Fonctions<input type="text" name="spec_fonctions"></label>
+    <label>Bracelet<input type="text" name="spec_bracelet"></label>
+    <label>Boîtier<input type="text" name="spec_boitier"></label>
+    <label>Verre<input type="text" name="spec_verre"></label>
+    <label>Étanchéité<input type="text" name="spec_etancheite"></label>
+    <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:6px">
+      <button type="submit" style="flex:1;padding:11px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer">Enregistrer les modifications</button>
+      <button type="button" id="edit-cancel" style="padding:11px 18px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer">Annuler</button>
+    </div>
+    <p class="status-msg" id="edit-status" style="grid-column:1/-1"></p>
+  </form>
+</dialog>
+
+<script>
+const ADMIN_KEY = 'falio_admin_pw';
+let ADMIN_PASSWORD = sessionStorage.getItem(ADMIN_KEY) || '';
+let ALL_PRODUCTS = [];
+
+function money(n){ return Number(n).toLocaleString('fr-FR') + ' DA' }
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': ADMIN_PASSWORD, ...(options.headers||{}) }
+  });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.message || 'Erreur serveur (' + res.status + ')');
+  return data;
+}
+
+let CURRENT_SETTINGS = {};
+
+function showApp(){
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('app').hidden = false;
+  loadProducts();
+  loadSettings();
+}
+
+function imgUrl(path){ if(!path) return ''; return path.startsWith('http') ? path : '/'+path; }
+
+async function loadSettings(){
+  const statusEl = document.getElementById('settings-status');
+  try {
+    CURRENT_SETTINGS = await api('/.netlify/functions/admin-settings');
+    const f = document.getElementById('settings-form');
+    f.brand_name.value = CURRENT_SETTINGS.brand_name || '';
+    f.brand_tagline.value = CURRENT_SETTINGS.brand_tagline || '';
+    f.hero_kicker.value = CURRENT_SETTINGS.hero_kicker || '';
+    f.hero_title.value = CURRENT_SETTINGS.hero_title || '';
+    f.hero_text.value = CURRENT_SETTINGS.hero_text || '';
+    f.cta_text.value = CURRENT_SETTINGS.cta_text || '';
+    f.story_kicker.value = CURRENT_SETTINGS.story_kicker || '';
+    f.story_title.value = CURRENT_SETTINGS.story_title || '';
+    f.story_text.value = CURRENT_SETTINGS.story_text || '';
+    setPreview('logo-preview', imgUrl(CURRENT_SETTINGS.logo_image));
+    setPreview('hero-preview', imgUrl(CURRENT_SETTINGS.hero_image));
+    setPreview('story-preview', imgUrl(CURRENT_SETTINGS.story_image));
+  } catch (e) {
+    statusEl.textContent = 'Erreur au chargement de la page d\'accueil : ' + e.message;
+    statusEl.className = 'status-msg err';
+  }
+}
+
+function setPreview(id, url){
+  const el = document.getElementById(id);
+  if (url) { el.src = url; el.style.display = 'block'; } else { el.style.display = 'none'; }
+}
+
+[['logo-input','logo-preview'],['hero-input','hero-preview'],['story-input','story-preview']].forEach(([inputId,previewId])=>{
+  document.getElementById(inputId).addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setPreview(previewId, ev.target.result);
+    reader.readAsDataURL(file);
+  });
+});
+
+document.getElementById('settings-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('settings-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…';
+
+  try {
+    const f = new FormData(form);
+    const payload = {
+      brand_name: f.get('brand_name'), brand_tagline: f.get('brand_tagline'),
+      hero_kicker: f.get('hero_kicker'), hero_title: f.get('hero_title'), hero_text: f.get('hero_text'),
+      cta_text: f.get('cta_text'),
+      story_kicker: f.get('story_kicker'), story_title: f.get('story_title'), story_text: f.get('story_text')
+    };
+
+    async function uploadIfPresent(inputId, key){
+      const file = document.getElementById(inputId).files[0];
+      if (!file) return;
+      const base64 = await resizeImage(file, 1600, 0.85);
+      const res = await api('/.netlify/functions/admin-upload', {
+        method: 'POST',
+        body: JSON.stringify({ filename: file.name, contentType: 'image/jpeg', dataBase64: base64 })
+      });
+      payload[key] = res.url;
+    }
+
+    await uploadIfPresent('logo-input', 'logo_image');
+    await uploadIfPresent('hero-input', 'hero_image');
+    await uploadIfPresent('story-input', 'story_image');
+
+    await api('/.netlify/functions/admin-settings', { method: 'PATCH', body: JSON.stringify(payload) });
+
+    statusEl.textContent = 'Page d\'accueil mise à jour ✓';
+    statusEl.className = 'status-msg ok';
+    document.getElementById('logo-input').value = '';
+    document.getElementById('hero-input').value = '';
+    document.getElementById('story-input').value = '';
+    loadSettings();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer la page d\'accueil';
+  }
+});
+
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const pw = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try {
+    const res = await fetch('/.netlify/functions/admin-login', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.success) {
+      ADMIN_PASSWORD = pw;
+      sessionStorage.setItem(ADMIN_KEY, pw);
+      showApp();
+    } else {
+      errEl.textContent = data.message || 'Mot de passe incorrect.';
+    }
+  } catch (e) {
+    errEl.textContent = 'Erreur de connexion au serveur.';
+  }
+});
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('login-btn').click(); });
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem(ADMIN_KEY);
+  location.reload();
+});
+
+if (ADMIN_PASSWORD) showApp();
+
+async function loadProducts(){
+  const statusEl = document.getElementById('list-status');
+  const table = document.getElementById('product-table');
+  statusEl.textContent = 'Chargement…'; statusEl.className='status-msg';
+  try {
+    ALL_PRODUCTS = await api('/.netlify/functions/admin-products');
+    if (!Array.isArray(ALL_PRODUCTS)) throw new Error('Réponse inattendue du serveur.');
+    document.getElementById('product-count').textContent = ALL_PRODUCTS.length;
+    statusEl.textContent = '';
+    table.hidden = false;
+    renderTable();
+  } catch (e) {
+    statusEl.textContent = 'Erreur : ' + e.message;
+    statusEl.className = 'status-msg err';
+  }
+}
+
+function renderTable(){
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const genderFilter = document.getElementById('filter-gender').value;
+  const stockFilter = document.getElementById('filter-stock').value;
+  const tbody = document.getElementById('product-tbody');
+  tbody.innerHTML = '';
+
+  ALL_PRODUCTS.filter(p => {
+    if (genderFilter && p.gender !== genderFilter) return false;
+    const threshold = p.low_stock_threshold ?? 2;
+    if (stockFilter === 'low' && !(p.stock > 0 && p.stock <= threshold)) return false;
+    if (stockFilter === 'out' && p.stock !== 0) return false;
+    if (q && !(p.model.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) || p.color.toLowerCase().includes(q))) return false;
+    return true;
+  }).forEach(p => {
+    const threshold = p.low_stock_threshold ?? 2;
+    const tr = document.createElement('tr');
+    if (p.stock === 0) tr.className = 'out-stock';
+    else if (p.stock <= threshold) tr.className = 'low-stock';
+
+    const statusBadge = p.stock === 0
+      ? '<span class="badge out">Rupture</span>'
+      : (p.stock <= threshold ? '<span class="badge low">Stock bas</span>' : '<span class="badge ok">OK</span>');
+
+    tr.innerHTML = `
+      <td>${p.image ? `<img src="${p.image.startsWith('http')?p.image:'/'+p.image}" alt="">` : ''}</td>
+      <td>${p.model}</td>
+      <td>${p.name}</td>
+      <td>${p.color}</td>
+      <td>${money(p.price)}</td>
+      <td>${p.gender}</td>
+      <td><input class="stock-input" type="number" min="0" value="${p.stock}" data-id="${p.id}"></td>
+      <td>${statusBadge}</td>
+      <td><button class="row-actions btn-toggle" data-action="toggle" data-id="${p.id}" data-active="${p.active}">${p.active ? 'Actif' : 'Masqué'}</button></td>
+      <td class="row-actions">
+        <button class="btn-save" data-action="save-stock" data-id="${p.id}">Enregistrer</button>
+        <button class="btn-toggle" data-action="edit" data-id="${p.id}">Modifier</button>
+        <button class="btn-delete" data-action="delete" data-id="${p.id}">Supprimer</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('search-input').addEventListener('input', renderTable);
+document.getElementById('filter-gender').addEventListener('change', renderTable);
+document.getElementById('filter-stock').addEventListener('change', renderTable);
+
+document.getElementById('product-tbody').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === 'save-stock') {
+    const input = document.querySelector(`.stock-input[data-id="${id}"]`);
+    const newStock = Number(input.value);
+    btn.textContent = '…';
+    try {
+      await api('/.netlify/functions/admin-products', { method: 'PATCH', body: JSON.stringify({ id: Number(id), stock: newStock }) });
+      const p = ALL_PRODUCTS.find(x => x.id == id); if (p) p.stock = newStock;
+      btn.textContent = 'Enregistrer';
+      renderTable();
+    } catch (err) {
+      alert('Erreur : ' + err.message);
+      btn.textContent = 'Enregistrer';
+    }
+  }
+
+  if (action === 'toggle') {
+    const nowActive = btn.dataset.active === 'true';
+    try {
+      await api('/.netlify/functions/admin-products', { method: 'PATCH', body: JSON.stringify({ id: Number(id), active: !nowActive }) });
+      const p = ALL_PRODUCTS.find(x => x.id == id); if (p) p.active = !nowActive;
+      renderTable();
+    } catch (err) { alert('Erreur : ' + err.message); }
+  }
+
+  if (action === 'edit') {
+    const p = ALL_PRODUCTS.find(x => x.id == id);
+    if (!p) return;
+    const form = document.getElementById('edit-form');
+    form.id.value = p.id;
+    form.model.value = p.model;
+    form.name.value = p.name;
+    form.color.value = p.color;
+    form.price.value = p.price;
+    form.gender.value = p.gender;
+    form.stock.value = p.stock;
+    form.low_stock_threshold.value = p.low_stock_threshold ?? 2;
+    const specs = Array.isArray(p.specs) ? p.specs : [];
+    const findSpec = label => { const row = specs.find(s => s[0] === label); return row ? row[1] : ''; };
+    form.spec_mouvement.value = findSpec('Mouvement');
+    form.spec_fonctions.value = findSpec('Fonctions');
+    form.spec_bracelet.value = findSpec('Bracelet');
+    form.spec_boitier.value = findSpec('Boîtier');
+    form.spec_verre.value = findSpec('Verre');
+    form.spec_etancheite.value = findSpec('Étanchéité');
+    document.getElementById('edit-status').textContent = '';
+    document.getElementById('edit-dialog').showModal();
+  }
+
+  if (action === 'delete') {
+    if (!confirm('Supprimer définitivement cette montre du catalogue ?')) return;
+    try {
+      await api('/.netlify/functions/admin-products', { method: 'DELETE', body: JSON.stringify({ id: Number(id) }) });
+      ALL_PRODUCTS = ALL_PRODUCTS.filter(x => x.id != id);
+      document.getElementById('product-count').textContent = ALL_PRODUCTS.length;
+      renderTable();
+    } catch (err) { alert('Erreur : ' + err.message); }
+  }
+});
+
+document.getElementById('edit-cancel').addEventListener('click', () => document.getElementById('edit-dialog').close());
+
+document.getElementById('edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('edit-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…';
+
+  try {
+    const f = new FormData(form);
+    const specPairs = [
+      ['Mouvement', f.get('spec_mouvement')],
+      ['Fonctions', f.get('spec_fonctions')],
+      ['Bracelet', f.get('spec_bracelet')],
+      ['Boîtier', f.get('spec_boitier')],
+      ['Verre', f.get('spec_verre')],
+      ['Étanchéité', f.get('spec_etancheite')]
+    ].filter(([,v]) => v && v.trim());
+
+    await api('/.netlify/functions/admin-products', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        id: Number(f.get('id')),
+        model: f.get('model'), name: f.get('name'), color: f.get('color'),
+        price: Number(f.get('price')), gender: f.get('gender'),
+        stock: Number(f.get('stock')), low_stock_threshold: Number(f.get('low_stock_threshold')) || 2,
+        specs: specPairs.length ? specPairs : null
+      })
+    });
+
+    document.getElementById('edit-dialog').close();
+    loadProducts();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer les modifications';
+  }
+});
+
+// --- Ajout d'une nouvelle montre ---
+function resizeImage(file, maxSize = 1000, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
+      else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(dataUrl.split(',')[1]);
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('photo-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const preview = document.getElementById('photo-preview');
+  if (!file) { preview.style.display = 'none'; return; }
+  const reader = new FileReader();
+  reader.onload = ev => { preview.src = ev.target.result; preview.style.display = 'block'; };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('add-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('add-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Ajout en cours…';
+
+  try {
+    const f = new FormData(form);
+    let imageUrl = null;
+    const photoFile = document.getElementById('photo-input').files[0];
+    if (photoFile) {
+      const base64 = await resizeImage(photoFile);
+      const uploadRes = await api('/.netlify/functions/admin-upload', {
+        method: 'POST',
+        body: JSON.stringify({ filename: photoFile.name, contentType: 'image/jpeg', dataBase64: base64 })
+      });
+      imageUrl = uploadRes.url;
+    }
+
+    const specPairs = [
+      ['Mouvement', f.get('spec_mouvement')],
+      ['Fonctions', f.get('spec_fonctions')],
+      ['Bracelet', f.get('spec_bracelet')],
+      ['Boîtier', f.get('spec_boitier')],
+      ['Verre', f.get('spec_verre')],
+      ['Étanchéité', f.get('spec_etancheite')]
+    ].filter(([,v]) => v && v.trim());
+
+    await api('/.netlify/functions/admin-products', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: f.get('model'), name: f.get('name'), color: f.get('color'),
+        price: Number(f.get('price')), gender: f.get('gender'),
+        stock: Number(f.get('stock')), low_stock_threshold: Number(f.get('low_stock_threshold')) || 2,
+        image: imageUrl,
+        specs: specPairs.length ? specPairs : null
+      })
+    });
+
+    statusEl.textContent = 'Montre ajoutée avec succès ✓';
+    statusEl.className = 'status-msg ok';
+    form.reset();
+    document.getElementById('photo-preview').style.display = 'none';
+    loadProducts();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Ajouter la montre';
+  }
+});
+</script>
+</body>
+</html>
