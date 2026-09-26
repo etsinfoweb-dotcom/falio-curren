@@ -65,6 +65,29 @@ td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee
   <main>
 
     <div class="panel">
+      <h2>Page d'accueil du site</h2>
+      <form id="settings-form" class="add-form">
+        <label>Nom de la marque<input type="text" name="brand_name"></label>
+        <label>Sous-titre du logo<input type="text" name="brand_tagline"></label>
+        <label>Logo (image, optionnel)<input type="file" name="logo_photo" accept="image/*" id="logo-input"></label>
+        <img id="logo-preview" class="preview">
+        <label class="full">Texte au-dessus du titre (bannière)<input type="text" name="hero_kicker"></label>
+        <label class="full">Titre principal (bannière)<input type="text" name="hero_title"></label>
+        <label class="full">Texte de la bannière<input type="text" name="hero_text"></label>
+        <label>Texte du bouton principal<input type="text" name="cta_text"></label>
+        <label>Photo de la bannière<input type="file" name="hero_photo" accept="image/*" id="hero-input"></label>
+        <img id="hero-preview" class="preview">
+        <label class="full">Texte au-dessus du titre ("À propos")<input type="text" name="story_kicker"></label>
+        <label class="full">Titre de la section "À propos"<input type="text" name="story_title"></label>
+        <label class="full">Texte de la section "À propos"<input type="text" name="story_text"></label>
+        <label>Photo de la section "À propos"<input type="file" name="story_photo" accept="image/*" id="story-input"></label>
+        <img id="story-preview" class="preview">
+        <button type="submit">Enregistrer la page d'accueil</button>
+      </form>
+      <p class="status-msg" id="settings-status"></p>
+    </div>
+
+    <div class="panel">
       <h2>Ajouter une nouvelle montre</h2>
       <form id="add-form" class="add-form">
         <label>Référence (modèle)<input type="text" name="model" required placeholder="ex. 8502"></label>
@@ -164,11 +187,103 @@ async function api(path, options = {}) {
   return data;
 }
 
+let CURRENT_SETTINGS = {};
+
 function showApp(){
   document.getElementById('login-screen').hidden = true;
   document.getElementById('app').hidden = false;
   loadProducts();
+  loadSettings();
 }
+
+function imgUrl(path){ if(!path) return ''; return path.startsWith('http') ? path : '/'+path; }
+
+async function loadSettings(){
+  const statusEl = document.getElementById('settings-status');
+  try {
+    CURRENT_SETTINGS = await api('/.netlify/functions/admin-settings');
+    const f = document.getElementById('settings-form');
+    f.brand_name.value = CURRENT_SETTINGS.brand_name || '';
+    f.brand_tagline.value = CURRENT_SETTINGS.brand_tagline || '';
+    f.hero_kicker.value = CURRENT_SETTINGS.hero_kicker || '';
+    f.hero_title.value = CURRENT_SETTINGS.hero_title || '';
+    f.hero_text.value = CURRENT_SETTINGS.hero_text || '';
+    f.cta_text.value = CURRENT_SETTINGS.cta_text || '';
+    f.story_kicker.value = CURRENT_SETTINGS.story_kicker || '';
+    f.story_title.value = CURRENT_SETTINGS.story_title || '';
+    f.story_text.value = CURRENT_SETTINGS.story_text || '';
+    setPreview('logo-preview', imgUrl(CURRENT_SETTINGS.logo_image));
+    setPreview('hero-preview', imgUrl(CURRENT_SETTINGS.hero_image));
+    setPreview('story-preview', imgUrl(CURRENT_SETTINGS.story_image));
+  } catch (e) {
+    statusEl.textContent = 'Erreur au chargement de la page d\'accueil : ' + e.message;
+    statusEl.className = 'status-msg err';
+  }
+}
+
+function setPreview(id, url){
+  const el = document.getElementById(id);
+  if (url) { el.src = url; el.style.display = 'block'; } else { el.style.display = 'none'; }
+}
+
+[['logo-input','logo-preview'],['hero-input','hero-preview'],['story-input','story-preview']].forEach(([inputId,previewId])=>{
+  document.getElementById(inputId).addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setPreview(previewId, ev.target.result);
+    reader.readAsDataURL(file);
+  });
+});
+
+document.getElementById('settings-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('settings-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…';
+
+  try {
+    const f = new FormData(form);
+    const payload = {
+      brand_name: f.get('brand_name'), brand_tagline: f.get('brand_tagline'),
+      hero_kicker: f.get('hero_kicker'), hero_title: f.get('hero_title'), hero_text: f.get('hero_text'),
+      cta_text: f.get('cta_text'),
+      story_kicker: f.get('story_kicker'), story_title: f.get('story_title'), story_text: f.get('story_text')
+    };
+
+    async function uploadIfPresent(inputId, key){
+      const file = document.getElementById(inputId).files[0];
+      if (!file) return;
+      const base64 = await resizeImage(file, 1600, 0.85);
+      const res = await api('/.netlify/functions/admin-upload', {
+        method: 'POST',
+        body: JSON.stringify({ filename: file.name, contentType: 'image/jpeg', dataBase64: base64 })
+      });
+      payload[key] = res.url;
+    }
+
+    await uploadIfPresent('logo-input', 'logo_image');
+    await uploadIfPresent('hero-input', 'hero_image');
+    await uploadIfPresent('story-input', 'story_image');
+
+    await api('/.netlify/functions/admin-settings', { method: 'PATCH', body: JSON.stringify(payload) });
+
+    statusEl.textContent = 'Page d\'accueil mise à jour ✓';
+    statusEl.className = 'status-msg ok';
+    document.getElementById('logo-input').value = '';
+    document.getElementById('hero-input').value = '';
+    document.getElementById('story-input').value = '';
+    loadSettings();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer la page d\'accueil';
+  }
+});
 
 document.getElementById('login-btn').addEventListener('click', async () => {
   const pw = document.getElementById('login-password').value;
