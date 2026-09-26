@@ -93,7 +93,8 @@ td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee
         <label>Référence (modèle)<input type="text" name="model" required placeholder="ex. 8502"></label>
         <label>Nom<input type="text" name="name" required placeholder="ex. CURREN Élan · 8502"></label>
         <label>Couleur<input type="text" name="color" required placeholder="ex. Noir et argenté"></label>
-        <label>Prix (DA)<input type="number" name="price" required min="0"></label>
+        <label>Prix de vente (DA)<input type="number" name="price" required min="0"></label>
+        <label>Prix d'achat (DA)<input type="number" name="cost_price" min="0" value="0"></label>
         <label>Collection
           <select name="gender" required>
             <option value="homme">Homme</option>
@@ -132,8 +133,77 @@ td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee
       </div>
       <p class="status-msg" id="list-status">Chargement…</p>
       <table id="product-table" hidden>
-        <thead><tr><th></th><th>Modèle</th><th>Nom</th><th>Couleur</th><th>Prix</th><th>Collection</th><th>Stock</th><th>Statut</th><th>Actif</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Modèle</th><th>Nom</th><th>Couleur</th><th>Prix vente</th><th>Prix achat</th><th>Marge</th><th>Collection</th><th>Stock</th><th>Statut</th><th>Actif</th><th></th></tr></thead>
         <tbody id="product-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Tableau de bord — Bénéfices</h2>
+      <div class="toolbar">
+        <select id="dash-range">
+          <option value="today">Aujourd'hui</option>
+          <option value="7">7 derniers jours</option>
+          <option value="30" selected>30 derniers jours</option>
+          <option value="all">Depuis le début</option>
+        </select>
+      </div>
+      <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px"></div>
+      <p class="status-msg" id="dash-status"></p>
+      <h3 style="font-size:14px;margin:16px 0 8px">Meilleurs produits (par bénéfice)</h3>
+      <table id="dash-top-table">
+        <thead><tr><th>Modèle</th><th>Couleur</th><th>Qté vendue</th><th>CA</th><th>Coût</th><th>Bénéfice</th></tr></thead>
+        <tbody id="dash-top-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Enregistrer une vente</h2>
+      <form id="sale-form" class="add-form">
+        <label class="full">Montre vendue
+          <select name="product_id" id="sale-product-select" required><option value="" disabled selected>Choisir une montre…</option></select>
+        </label>
+        <label>Quantité<input type="number" name="quantity" min="1" value="1" required></label>
+        <label>Prix de vente unitaire (DA)<input type="number" name="unit_price" min="0" required></label>
+        <label>Canal
+          <select name="source">
+            <option value="site">Site web</option>
+            <option value="telephone">Téléphone</option>
+            <option value="en_personne">En personne</option>
+          </select>
+        </label>
+        <label>Date de vente<input type="date" name="sold_at" id="sale-date"></label>
+        <label>Client (optionnel)<input type="text" name="customer_name"></label>
+        <label>Téléphone client (optionnel)<input type="text" name="customer_phone"></label>
+        <p class="full" id="sale-profit-preview" style="margin:0;font-size:13px;color:var(--muted)"></p>
+        <button type="submit">Enregistrer la vente</button>
+      </form>
+      <p class="status-msg" id="sale-status"></p>
+      <h3 style="font-size:14px;margin:16px 0 8px">Historique des ventes</h3>
+      <table id="sales-table">
+        <thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Prix vente</th><th>Bénéfice</th><th>Canal</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="sales-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Réapprovisionnement (achats)</h2>
+      <form id="purchase-form" class="add-form">
+        <label class="full">Montre réapprovisionnée
+          <select name="product_id" id="purchase-product-select" required><option value="" disabled selected>Choisir une montre…</option></select>
+        </label>
+        <label>Quantité achetée<input type="number" name="quantity" min="1" value="1" required></label>
+        <label>Prix d'achat unitaire (DA)<input type="number" name="unit_cost" min="0" required></label>
+        <label>Fournisseur (optionnel)<input type="text" name="supplier"></label>
+        <label>Date d'achat<input type="date" name="purchased_at" id="purchase-date"></label>
+        <label class="full">Note (optionnel)<input type="text" name="note"></label>
+        <button type="submit">Enregistrer l'achat</button>
+      </form>
+      <p class="status-msg" id="purchase-status"></p>
+      <h3 style="font-size:14px;margin:16px 0 8px">Historique des achats</h3>
+      <table id="purchases-table">
+        <thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Total</th><th>Fournisseur</th><th></th></tr></thead>
+        <tbody id="purchases-tbody"></tbody>
       </table>
     </div>
 
@@ -147,7 +217,8 @@ td img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:#eee
     <label>Référence (modèle)<input type="text" name="model" required></label>
     <label>Nom<input type="text" name="name" required></label>
     <label>Couleur<input type="text" name="color" required></label>
-    <label>Prix (DA)<input type="number" name="price" required min="0"></label>
+    <label>Prix de vente (DA)<input type="number" name="price" required min="0"></label>
+    <label>Prix d'achat (DA)<input type="number" name="cost_price" min="0"></label>
     <label>Collection
       <select name="gender" required>
         <option value="homme">Homme</option>
@@ -192,8 +263,226 @@ let CURRENT_SETTINGS = {};
 function showApp(){
   document.getElementById('login-screen').hidden = true;
   document.getElementById('app').hidden = false;
-  loadProducts();
+  loadProducts().then(populateProductSelects);
   loadSettings();
+  loadDashboard();
+  loadSales();
+  loadPurchases();
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('sale-date').value = today;
+  document.getElementById('purchase-date').value = today;
+}
+
+function populateProductSelects(){
+  [document.getElementById('sale-product-select'), document.getElementById('purchase-product-select')].forEach(sel=>{
+    const current = sel.value;
+    sel.innerHTML = '<option value="" disabled selected>Choisir une montre…</option>';
+    ALL_PRODUCTS.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.name} — ${p.color} (stock: ${p.stock})`;
+      sel.appendChild(opt);
+    });
+    if (current) sel.value = current;
+  });
+}
+
+document.getElementById('sale-product-select').addEventListener('change', updateSalePreview);
+document.getElementById('sale-form').querySelector('[name="unit_price"]').addEventListener('input', updateSalePreview);
+document.getElementById('sale-form').querySelector('[name="quantity"]').addEventListener('input', updateSalePreview);
+
+function updateSalePreview(){
+  const productId = document.getElementById('sale-product-select').value;
+  const product = ALL_PRODUCTS.find(p => p.id == productId);
+  const preview = document.getElementById('sale-profit-preview');
+  const priceInput = document.getElementById('sale-form').querySelector('[name="unit_price"]');
+  if (product && !priceInput.value) priceInput.value = product.price;
+  if (!product) { preview.textContent = ''; return; }
+  const qty = Number(document.getElementById('sale-form').querySelector('[name="quantity"]').value) || 1;
+  const unitPrice = Number(priceInput.value) || product.price;
+  const cost = Number(product.cost_price) || 0;
+  const profit = (unitPrice - cost) * qty;
+  preview.textContent = `Bénéfice estimé : ${money(profit)} (prix d'achat : ${money(cost)} × ${qty})`;
+}
+
+document.getElementById('sale-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('sale-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…';
+  try {
+    const f = new FormData(form);
+    const productId = Number(f.get('product_id'));
+    const product = ALL_PRODUCTS.find(p => p.id === productId);
+    if (!product) throw new Error('Montre introuvable.');
+    await api('/.netlify/functions/admin-sales', {
+      method: 'POST',
+      body: JSON.stringify({
+        items: [{ product_id: productId, model: product.model, color: product.color, name: product.name, qty: Number(f.get('quantity')), unit_price: Number(f.get('unit_price')) }],
+        source: f.get('source'),
+        customer_name: f.get('customer_name') || null,
+        customer_phone: f.get('customer_phone') || null,
+        sold_at: f.get('sold_at')
+      })
+    });
+    statusEl.textContent = 'Vente enregistrée ✓ (stock mis à jour)';
+    statusEl.className = 'status-msg ok';
+    form.reset();
+    document.getElementById('sale-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('sale-profit-preview').textContent = '';
+    await loadProducts(); populateProductSelects(); renderTable();
+    loadSales(); loadDashboard();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer la vente';
+  }
+});
+
+async function loadSales(){
+  try {
+    const sales = await api('/.netlify/functions/admin-sales');
+    const tbody = document.getElementById('sales-tbody');
+    tbody.innerHTML = '';
+    sales.forEach(s => {
+      (s.items || []).forEach(it => {
+        const tr = document.createElement('tr');
+        const profit = ((Number(it.unit_price)||0) - (Number(it.unit_cost)||0)) * (Number(it.qty)||0);
+        const channelLabel = {site:'Site web', telephone:'Téléphone', en_personne:'En personne', manual:'Manuel'}[s.source] || s.source;
+        tr.innerHTML = `
+          <td>${new Date(s.created_at).toLocaleDateString('fr-FR')}</td>
+          <td>${it.name || it.model} ${it.color ? '— '+it.color : ''}</td>
+          <td>${it.qty}</td>
+          <td>${money(it.unit_price)}</td>
+          <td>${money(profit)}</td>
+          <td>${channelLabel}</td>
+          <td>${s.status}</td>
+          <td><button class="btn-delete" data-action="delete-sale" data-id="${s.id}">Supprimer</button></td>`;
+        tbody.appendChild(tr);
+      });
+    });
+  } catch (e) { /* silencieux */ }
+}
+
+document.getElementById('sales-tbody').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action="delete-sale"]');
+  if (!btn) return;
+  if (!confirm('Supprimer cette vente de l\'historique ? (le stock ne sera pas restauré automatiquement)')) return;
+  try {
+    await api('/.netlify/functions/admin-sales', { method: 'DELETE', body: JSON.stringify({ id: Number(btn.dataset.id) }) });
+    loadSales(); loadDashboard();
+  } catch (err) { alert('Erreur : ' + err.message); }
+});
+
+document.getElementById('purchase-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const statusEl = document.getElementById('purchase-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+  submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…';
+  try {
+    const f = new FormData(form);
+    await api('/.netlify/functions/admin-purchases', {
+      method: 'POST',
+      body: JSON.stringify({
+        product_id: Number(f.get('product_id')),
+        quantity: Number(f.get('quantity')),
+        unit_cost: Number(f.get('unit_cost')),
+        supplier: f.get('supplier') || null,
+        note: f.get('note') || null,
+        purchased_at: f.get('purchased_at')
+      })
+    });
+    statusEl.textContent = 'Achat enregistré ✓ (stock et prix d\'achat mis à jour)';
+    statusEl.className = 'status-msg ok';
+    form.reset();
+    document.getElementById('purchase-date').value = new Date().toISOString().slice(0,10);
+    await loadProducts(); populateProductSelects(); renderTable();
+    loadPurchases();
+  } catch (err) {
+    statusEl.textContent = 'Erreur : ' + err.message;
+    statusEl.className = 'status-msg err';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer l\'achat';
+  }
+});
+
+async function loadPurchases(){
+  try {
+    const purchases = await api('/.netlify/functions/admin-purchases');
+    const tbody = document.getElementById('purchases-tbody');
+    tbody.innerHTML = '';
+    purchases.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${new Date(p.purchased_at).toLocaleDateString('fr-FR')}</td>
+        <td>${p.product_name}</td>
+        <td>${p.quantity}</td>
+        <td>${money(p.unit_cost)}</td>
+        <td>${money(p.total_cost)}</td>
+        <td>${p.supplier || '—'}</td>
+        <td><button class="btn-delete" data-action="delete-purchase" data-id="${p.id}">Supprimer</button></td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (e) { /* silencieux */ }
+}
+
+document.getElementById('purchases-tbody').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action="delete-purchase"]');
+  if (!btn) return;
+  if (!confirm('Supprimer cet achat de l\'historique ? (le stock ne sera pas ajusté automatiquement)')) return;
+  try {
+    await api('/.netlify/functions/admin-purchases', { method: 'DELETE', body: JSON.stringify({ id: Number(btn.dataset.id) }) });
+    loadPurchases();
+  } catch (err) { alert('Erreur : ' + err.message); }
+});
+
+document.getElementById('dash-range').addEventListener('change', loadDashboard);
+
+async function loadDashboard(){
+  const statusEl = document.getElementById('dash-status');
+  statusEl.textContent = 'Chargement…'; statusEl.className = 'status-msg';
+  try {
+    const range = document.getElementById('dash-range').value;
+    let query = '';
+    if (range !== 'all') {
+      const from = new Date();
+      if (range === 'today') { from.setHours(0,0,0,0); }
+      else { from.setDate(from.getDate() - Number(range)); }
+      query = '?from=' + encodeURIComponent(from.toISOString());
+    }
+    const data = await api('/.netlify/functions/admin-dashboard' + query);
+    statusEl.textContent = '';
+    const kpis = document.getElementById('dash-kpis');
+    kpis.innerHTML = `
+      ${kpiCard('Chiffre d\'affaires', money(data.revenue))}
+      ${kpiCard('Coût total', money(data.cost))}
+      ${kpiCard('Bénéfice', money(data.profit))}
+      ${kpiCard('Marge', data.margin_pct + '%')}
+      ${kpiCard('Ventes', data.orders_count)}
+      ${kpiCard('Frais livraison', money(data.delivery_fees))}
+    `;
+    const tbody = document.getElementById('dash-top-tbody');
+    tbody.innerHTML = '';
+    (data.top_products || []).forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${p.model||''}</td><td>${p.color||''}</td><td>${p.qty}</td><td>${money(p.revenue)}</td><td>${money(p.cost)}</td><td>${money(p.profit)}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    statusEl.textContent = 'Erreur : ' + e.message;
+    statusEl.className = 'status-msg err';
+  }
+}
+
+function kpiCard(label, value){
+  return `<div style="background:#faf9f6;border:1px solid var(--line);border-radius:10px;padding:12px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">${label}</div><div style="font-size:18px;font-weight:700">${value}</div></div>`;
 }
 
 function imgUrl(path){ if(!path) return ''; return path.startsWith('http') ? path : '/'+path; }
@@ -361,6 +650,8 @@ function renderTable(){
       <td>${p.name}</td>
       <td>${p.color}</td>
       <td>${money(p.price)}</td>
+      <td><input class="stock-input cost-input" type="number" min="0" value="${p.cost_price || 0}" data-id="${p.id}" style="width:70px"></td>
+      <td>${p.cost_price ? money(p.price - p.cost_price) : '—'}</td>
       <td>${p.gender}</td>
       <td><input class="stock-input" type="number" min="0" value="${p.stock}" data-id="${p.id}"></td>
       <td>${statusBadge}</td>
@@ -385,12 +676,14 @@ document.getElementById('product-tbody').addEventListener('click', async (e) => 
   const action = btn.dataset.action;
 
   if (action === 'save-stock') {
-    const input = document.querySelector(`.stock-input[data-id="${id}"]`);
-    const newStock = Number(input.value);
+    const stockInput = document.querySelector(`.stock-input:not(.cost-input)[data-id="${id}"]`);
+    const costInput = document.querySelector(`.cost-input[data-id="${id}"]`);
+    const newStock = Number(stockInput.value);
+    const newCost = Number(costInput.value) || 0;
     btn.textContent = '…';
     try {
-      await api('/.netlify/functions/admin-products', { method: 'PATCH', body: JSON.stringify({ id: Number(id), stock: newStock }) });
-      const p = ALL_PRODUCTS.find(x => x.id == id); if (p) p.stock = newStock;
+      await api('/.netlify/functions/admin-products', { method: 'PATCH', body: JSON.stringify({ id: Number(id), stock: newStock, cost_price: newCost }) });
+      const p = ALL_PRODUCTS.find(x => x.id == id); if (p) { p.stock = newStock; p.cost_price = newCost; }
       btn.textContent = 'Enregistrer';
       renderTable();
     } catch (err) {
@@ -417,6 +710,7 @@ document.getElementById('product-tbody').addEventListener('click', async (e) => 
     form.name.value = p.name;
     form.color.value = p.color;
     form.price.value = p.price;
+    form.cost_price.value = p.cost_price || 0;
     form.gender.value = p.gender;
     form.stock.value = p.stock;
     form.low_stock_threshold.value = p.low_stock_threshold ?? 2;
@@ -469,7 +763,7 @@ document.getElementById('edit-form').addEventListener('submit', async (e) => {
       body: JSON.stringify({
         id: Number(f.get('id')),
         model: f.get('model'), name: f.get('name'), color: f.get('color'),
-        price: Number(f.get('price')), gender: f.get('gender'),
+        price: Number(f.get('price')), cost_price: Number(f.get('cost_price')) || 0, gender: f.get('gender'),
         stock: Number(f.get('stock')), low_stock_threshold: Number(f.get('low_stock_threshold')) || 2,
         specs: specPairs.length ? specPairs : null
       })
@@ -551,7 +845,7 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
       method: 'POST',
       body: JSON.stringify({
         model: f.get('model'), name: f.get('name'), color: f.get('color'),
-        price: Number(f.get('price')), gender: f.get('gender'),
+        price: Number(f.get('price')), cost_price: Number(f.get('cost_price')) || 0, gender: f.get('gender'),
         stock: Number(f.get('stock')), low_stock_threshold: Number(f.get('low_stock_threshold')) || 2,
         image: imageUrl,
         specs: specPairs.length ? specPairs : null
