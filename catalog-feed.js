@@ -2,6 +2,11 @@
 // Meta va appeler cette URL périodiquement pour connaître le stock réel.
 const { pg } = require('./_supabase');
 
+function slugifyColor(s) {
+  return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 function csvEscape(value) {
   const str = String(value == null ? '' : value);
   if (/[",\n]/.test(str)) {
@@ -27,14 +32,26 @@ exports.handler = async (event) => {
 
     const rows = [columns.join(',')];
 
+    // Fusionne les doublons (même modèle + même couleur) : Meta exige un ID unique par article.
+    const merged = new Map();
     products.forEach(p => {
+      const key = `${p.model}-${slugifyColor(p.color)}`;
+      if (merged.has(key)) {
+        merged.get(key).stock += p.stock;
+      } else {
+        merged.set(key, { ...p, stock: p.stock });
+      }
+    });
+    const dedupedProducts = [...merged.values()];
+
+    dedupedProducts.forEach(p => {
       const link = `${siteUrl}/?m=${encodeURIComponent(p.model)}&c=${encodeURIComponent(p.color)}`;
       const imageLink = p.image ? (p.image.startsWith('http') ? p.image : `${siteUrl}/${p.image}`) : '';
       const specsText = Array.isArray(p.specs) ? p.specs.map(s => s[0] + ': ' + s[1]).join('. ') : '';
       const description = `${p.name} — ${p.color}. ${specsText} Paiement à la livraison, livraison Noest partout en Algérie.`;
 
       const row = [
-        p.id,
+        `${p.model}-${slugifyColor(p.color)}`,
         `${p.name} — ${p.color}`,
         description,
         p.stock > 0 ? 'in stock' : 'out of stock',
@@ -56,7 +73,7 @@ exports.handler = async (event) => {
         'Content-Type': 'text/csv; charset=utf-8',
         'Cache-Control': 'public, max-age=1800'
       },
-      body: rows.join('\n')
+      body: '\uFEFF' + rows.join('\n')
     };
   } catch (err) {
     return { statusCode: 500, body: 'Erreur: ' + err.message };

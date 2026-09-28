@@ -1,0 +1,20 @@
+:root{--ink:#171916;--muted:#6d716b;--gold:#b78e50;--paper:#f5f4f0;--line:#e4e3dc;--green:#176143}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+a{color:var(--green)}
+.topbar{background:#161916;color:#f5f4f0;text-align:center;padding:10px 16px;font-size:11px;letter-spacing:.13em}
+.nav{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 max(6%,calc((100% - 1280px)/2));border-bottom:1px solid var(--line)}
+.logo{display:inline-flex;align-items:center;gap:7px;font-size:25px;font-weight:700;letter-spacing:.24em;text-decoration:none;color:inherit}
+.brand-icon{width:29px;height:29px;background:#e52b32;color:#fff;display:inline-grid;place-items:center;font-family:Georgia,serif;font-size:22px;font-weight:700;letter-spacing:0;line-height:1}
+.brand-lockup{display:flex;flex-direction:column;gap:3px}
+.brand-lockup small{font-size:8px;letter-spacing:.19em;color:var(--muted);font-weight:600}
+.back-link{font-size:12px;color:var(--muted);text-decoration:none}
+.legal{max-width:760px;margin:0 auto;padding:56px 20px 90px}
+.legal h1{font:400 34px Georgia,'Times New Roman',serif;margin:0 0 8px}
+.legal .updated{font-size:12px;color:var(--muted);margin:0 0 36px}
+.legal h2{font-size:17px;margin:34px 0 10px;color:var(--ink)}
+.legal p,.legal li{font-size:14px;line-height:1.85;color:#3c3e39}
+.legal ul{padding-left:20px}
+.legal .box{background:var(--paper);border:1px solid var(--line);padding:18px 20px;margin:18px 0}
+.footer{background:#151715;color:#fff;padding:25px 6%;text-align:center;margin-top:40px}
+.footer p{font-size:11px;color:#aaa;margin:4px 0}
